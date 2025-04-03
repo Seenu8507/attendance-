@@ -52,7 +52,7 @@ const ExcelUploader = () => {
       <h2>Upload Excel File</h2>
       <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="mb-4" />
       
-      {file && <p className="mt-4"> Uploaded Your Excel File: {file.name}</p>}
+      {file && <p className="mt-4"> Uploaded Your Excel File Here ! {file.name}</p>}
 
       {data.length > 0 && (
         <div>
