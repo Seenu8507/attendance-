@@ -7,7 +7,7 @@ import './App.css'
 function App() {
   return ( 
     <>
-    <div class='justify-center text-center'>
+    <div class='justify-center text-center  '>
           <ExcelUploader/>
           
           
