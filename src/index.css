@@ -10,7 +10,8 @@
    display: flex;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background: rgb(79,75,164);
+background: linear-gradient(90deg, rgba(79,75,164,1) 0%, rgba(0,212,255,1) 100%);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

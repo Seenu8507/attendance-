@@ -1,0 +1,10 @@
+{
+    "_id": "someMongoId",
+    "StudentName": "Kabilesh",
+    "mail": "alice@example.com",
+    "Parent_mob": "8220318846",
+    "dept": "CSE",
+    "year": 1,
+    "Absent": "No",
+    "__v": 0
+  }

@@ -1,0 +1,24 @@
+@keyframes scroll {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  
+  .background-scroll-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1; /* Makes it stay in the background */
+  }
+  
+  .animate-scroll {
+    display: flex;
+    width: max-content;
+    animation: scroll 30s linear infinite;
+  }
