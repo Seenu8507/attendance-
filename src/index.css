@@ -8,14 +8,19 @@
   justify-content: center;
   text-align: center;
    display: flex;
+  align-items: center;
+  min-height: 100vh;
+  flex-direction: column;   
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background: rgb(79,75,164);
-background: linear-gradient(90deg, rgba(79,75,164,1) 0%, rgba(0,212,255,1) 100%);
+ 
+background: linear-gradient(90deg, rgb(13, 13, 13) 0%, rgb(0, 193, 232) 100%);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
