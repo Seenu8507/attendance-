@@ -1,6 +1,6 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
-
+import LogoutButton from "./component/Logout";
 
 const ExcelUploader = () => {
   const [file, setFile] = useState(null);
@@ -28,6 +28,28 @@ const ExcelUploader = () => {
     updatedData[rowIndex][colKey] = value;
     setData(updatedData);
   };
+  const handleSendAllData = async () => {
+    const allData = data.map(row => ({
+      studentName: row["Student Name"],
+      parentNumber: row["Parent Number"],
+      status: row["Absent"] === "Yes" ? "Absent" : "Present"
+    }));
+  
+    fetch("http://localhost:5000/save-to-mongodb", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    console.log("Sending to MongoDB:", data);
+
+  
+    alert("All student data sent to MongoDB!");
+  };
+  <button onClick={handleSendAllData} className="mt-4 px-4 py-2 bg-purple-500 text-white rounded">
+  Send All Student Data to MongoDB
+</button>
+
 
   const handleAbsentChange = (rowIndex, value) => {
     const updatedData = [...data];
@@ -40,65 +62,42 @@ const ExcelUploader = () => {
     updatedData[rowIndex]["Absent"] = updatedData[rowIndex]["Absent"] === "Yes" ? "No" : "Yes";
     setData(updatedData);
   };
-
-  const handleExport = async() => {
-    const filePath = "C:\Users\seenu\Downloads\ "
-    await fetch("http://localhost:5000/trigger-uipath", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ filePath })
-})
-  .then(res => res.text())
-  .then(msg => alert("UiPath Triggered: " + msg))
-  .catch(err => alert("Failed to trigger UiPath"));
-
-
+  const handleExport = async () => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   
-    // Export using same filename
     const originalName = file?.name || "UpdatedFile.xlsx";
     XLSX.writeFile(wb, originalName);
-  };
-  const handleSaveToDB = async () => {
+  
+    // Transform Absent => status
+    const transformed = data.map(row => ({
+      StudentName: row.StudentName,
+      dept: row.dept,
+      year: row.year,
+      status: row.Absent === "Yes" ? "Absent" : "Present"
+    }));
+  
     try {
-      const response = await fetch("http://localhost:5000/api/save-excel", {
+      const response = await fetch("http://localhost:5000/save-to-mongodb", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-      alert(result.message);
-    } catch (error) {
-      alert("Failed to save data to MongoDB");
-      console.error(error);
-    }
-  };
-  const saveToMongo = async () => {
-    try {
-      const response = await fetch("http://localhost:27107/api/save-excel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data), // sending Excel JSON data
+        body: JSON.stringify(transformed),
       });
   
       const result = await response.json();
-      alert(result.message);
-    } catch (error) {
-      console.error("Error saving to MongoDB:", error);
-      alert("Error saving to MongoDB");
+      console.log(result.message);
+      alert("Data saved to MongoDB!");
+    } catch (err) {
+      console.error("Failed to save data to MongoDB", err);
+      alert("Failed to save data to MongoDB");
     }
   };
+  
   
 
   return (
-    
-
-    <div className="justify-center text-center min-h-screen p-8 bg-gradient-to-br from-purple-300 via-pink-200 to-yellow-100 text-center">
-      
+    <div className="justify-center text-center">
       <div className=" text-pink-700 text-5xl"><h1>Attendance</h1></div>
       <h2>Upload Excel File</h2>
       <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="mb-4" />
@@ -107,11 +106,11 @@ const ExcelUploader = () => {
 
       {data.length > 0 && (
         <div>
-          <table className="border-collapse border border-black w-full">
+          <table className="border-collapse border border-white w-full">
             <thead>
               <tr>
                 {Object.keys(data[0]).map((key) => (
-                  <th key={key} className="border border-black p-7">{key}</th>
+                  <th key={key} className="border border-gray-300 p-2">{key}</th>
                 ))}
                 
               </tr>
@@ -120,7 +119,7 @@ const ExcelUploader = () => {
               {data.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   {Object.keys(row).map((colKey, colIndex) => (
-                    <td key={colIndex} className="border border-black p-2">
+                    <td key={colIndex} className="border border-gray-300 p-2">
                       {colKey === "Absent" ? (
                         <select
                           value={row[colKey] || "No"}
@@ -154,14 +153,8 @@ const ExcelUploader = () => {
           <button onClick={handleExport} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Export to Excel</button>
         </div>
       )}
-      <button
-         onClick={saveToMongo}
-         className="mt-4 ml-4 px-4 py-2 bg-green-500 text-white rounded"
-         >
-         Store data
-        </button>
+      <LogoutButton />
     </div>
-  
   );
 };
 
