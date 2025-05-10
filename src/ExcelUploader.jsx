@@ -63,36 +63,56 @@ const ExcelUploader = () => {
     setData(updatedData);
   };
   const handleExport = async () => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  
-    const originalName = file?.name || "UpdatedFile.xlsx";
-    XLSX.writeFile(wb, originalName);
-  
-    // Transform Absent => status
-    const transformed = data.map(row => ({
-      StudentName: row.StudentName,
-      dept: row.dept,
-      year: row.year,
-      status: row.Absent === "Yes" ? "Absent" : "Present"
-    }));
-  
-    try {
-      const response = await fetch("http://localhost:5000/save-to-mongodb", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(transformed),
-      });
-  
-      const result = await response.json();
-      console.log(result.message);
-      alert("Data saved to MongoDB!");
-    } catch (err) {
-      console.error("Failed to save data to MongoDB", err);
-      alert("Failed to save data to MongoDB");
+  try {
+    const response = await fetch("http://localhost:5000/api/run-uipath", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}), // send empty or custom data
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      alert("UiPath process started!");
+    } else {
+      alert("Error: " + result.message);
     }
-  };
+  } catch (err) {
+    alert("Network error when calling UiPath trigger");
+    console.error(err);
+  }
+};
+const handleDownloadExcel = () => {
+  if (!file) return alert("No file uploaded yet!");
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+
+  // Get original filename without extension
+  const originalName = file.name.replace(/\.[^/.]+$/, "");
+
+  // Format date and time
+  const now = new Date();
+  const formatted = now
+    .toISOString()
+    .replace(/T/, "_")
+    .replace(/:/g, "-")
+    .split(".")[0]; // e.g., 2025-05-10_14-31-00
+
+  const newFilename = `${originalName}_${formatted}.xlsx`;
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = newFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+
   
   
 
@@ -150,7 +170,10 @@ const ExcelUploader = () => {
               ))}
             </tbody>
           </table>
-          <button onClick={handleExport} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Export to Excel</button>
+          <button onClick={handleExport} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Initiate call</button>
+          <button onClick={handleDownloadExcel} className="px-4 py-2 bg-green-500 text-white rounded">
+  Download Modified Excel
+</button>
         </div>
       )}
       <LogoutButton />
