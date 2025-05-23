@@ -28,7 +28,7 @@ function Login() {
           onSubmit={handleLogin}
           className="bg-white p-8 rounded-2xl shadow-xl w-96 space-y-6 animate-fade-in"
         >
-          <h2 className="text-3xl font-bold text-center text-indigo-700">Login</h2>
+          <h2 className="text-3xl font-bold text-center text-indigo-700">Login Here</h2>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <input
