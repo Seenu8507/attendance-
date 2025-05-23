@@ -4,7 +4,6 @@ import Home from './ExcelUploader';
 import Login from './component/Login';
 import PrivateRoute from './component/PrivateRoute';
 
-
 function App() {
   return (
     <Router>
