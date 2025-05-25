@@ -29,26 +29,41 @@ const ExcelUploader = () => {
     setData(updatedData);
   };
   const handleSendAllData = async () => {
-    const allData = data.map(row => ({
-      studentName: row["Student Name"],
-      parentNumber: row["Parent Number"],
-      status: row["Absent"] === "Yes" ? "Absent" : "Present"
+    if (!file) {
+      alert("No file uploaded to save data from!");
+      return;
+    }
+    const timestamp = new Date().toISOString();
+    const savedFileName = file.name;
+
+    // Add metadata to each student record
+    const dataWithMeta = data.map((row) => ({
+      ...row,
+      savedFileName,
+      savedAt: timestamp,
     }));
-  
-    fetch("http://localhost:5000/save-to-mongodb", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
 
-    console.log("Sending to MongoDB:", data);
+    try {
+      const response = await fetch("http://localhost:5000/save-to-mongodb", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataWithMeta),
+      });
 
-  
-    alert("All student data sent to MongoDB!");
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert("Failed to send data to MongoDB: " + errorData.message);
+        return;
+      }
+
+      alert("All student data sent to MongoDB!");
+      console.log("Sending to MongoDB:", dataWithMeta);
+    } catch (error) {
+      alert("Error sending data to MongoDB: " + error.message);
+      console.error("Error sending data to MongoDB:", error);
+    }
   };
-  <button onClick={handleSendAllData} className="mt-4 px-4 py-2 bg-purple-500 text-white rounded">
-  Send All Student Data to MongoDB
-</button>
+
 
 
   const handleAbsentChange = (rowIndex, value) => {
@@ -174,6 +189,9 @@ const handleDownloadExcel = () => {
           <button onClick={handleDownloadExcel} className="px-4 py-2 bg-green-500 text-white rounded">
   Download Modified Excel
 </button>
+          <button onClick={handleSendAllData} className="mt-4 ml-4 px-4 py-2 bg-purple-500 text-white rounded">
+            Save to MongoDB
+          </button>
         </div>
       )}
       <LogoutButton />
