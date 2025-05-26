@@ -60,26 +60,24 @@ app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
     console.log("Login attempt for username:", username);
-    const db = client.db(dbName);
-    const users = db.collection(usersCollectionName);
 
-    const user = await users.findOne({ username });
-    if (!user) {
-      console.log("User not found:", username);
-      return res.status(401).json({ message: "Invalid username or password" });
-    }
-    console.log("User found:", { username: user.username, id: user._id });
+    // Predefined credentials
+    const predefinedUsers = {
+      "sundar": "123",
+      "seenu": "456",
+      "user2": "password2",
+      "admin": "admin123"
+    };
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      console.log("Password mismatch for user:", username);
+    if (!predefinedUsers[username] || predefinedUsers[username] !== password) {
+      console.log("Invalid username or password for user:", username);
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
     // Generate JWT token
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
 
-    res.status(200).json({ token, username: user.username });
+    res.status(200).json({ token, username });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -90,12 +88,13 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/run-uipath", (req, res) => {
   const uiRobotPath = `"C:\\Program Files\\UiPath\\Studio\\UiRobot.exe"`; // ✅ Make sure this path is correct
-  const xamlPath = `"C:\\finalyearproject\\Attendancevoicemail\\Main.xaml"`; // ✅ Replace with your actual XAML file path
+  const packagePath = `"C:\\finalyearproject\\Attendancevoicemail\\Attendancevoicemial.1.0.6.nupkg"`; // Updated to your published package path
 
-  exec(`${uiRobotPath} -f ${xamlPath}`, (error, stdout) => {
+  exec(`${uiRobotPath} -file ${packagePath}`, (error, stdout, stderr) => {
     if (error) {
       console.error("UiPath error:", error);
-      return res.status(500).json({ message: "Failed to run UiPath processssssss" });
+      console.error("UiPath stderr:", stderr);
+      return res.status(500).json({ message: "Failed to run UiPath process", error: error.message, details: stderr });
     }
     console.log("UiPath Output:", stdout);
     res.status(200).json({ message: "UiPath process started successfully" });
