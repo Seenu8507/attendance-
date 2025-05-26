@@ -2,7 +2,7 @@
 import { Navigate } from 'react-router-dom';
 
 const PrivateRoute = ({ children }) => {
-  const user = localStorage.getItem('user');
+  const user = localStorage.getItem('user') || sessionStorage.getItem('user');
   return user ? children : <Navigate to="/login" />;
 };
 

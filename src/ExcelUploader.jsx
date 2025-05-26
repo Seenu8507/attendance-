@@ -1,10 +1,18 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
-import LogoutButton from "./component/Logout";
+import { MdLogout } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
+import img  from '../src/assets/mzcet.png'; // Adjust the path as necessary
 
 const ExcelUploader = () => {
   const [file, setFile] = useState(null);
   const [data, setData] = useState([]);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   const handleFileUpload = (e) => {
     const uploadedFile = e.target.files[0];
@@ -132,12 +140,48 @@ const handleDownloadExcel = () => {
   
 
   return (
-    <div className="justify-center text-center">
-      <div className=" text-pink-700 text-5xl"><h1>Attendance</h1></div>
-      <h2>Upload Excel File</h2>
-      <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="mb-4" />
+    <div className="justify-center text-center mt-60">
       
-      {file && <p className="mt-4"> Uploaded Your Excel File Here ! {file.name}</p>}
+      <div className=" text-pink-700 text-5xl"><h1>Attendance Managment</h1></div>
+      <h2 className="mt-10 text-2xl">Upload Excel File</h2>
+      {!file && (
+        <div
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              handleFileUpload({ target: { files: e.dataTransfer.files } });
+              e.dataTransfer.clearData();
+            }
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDragLeave={(e) => e.preventDefault()}
+          onClick={() => document.getElementById('fileInput').click()}
+        className="mb-4 border-4 border-dashed border-indigo-600 rounded-lg p-4 cursor-pointer text-indigo-600 hover:bg-indigo-100 max-w-md mx-auto"
+        >
+          Drag and drop your Excel file here, or click to select file
+        </div>
+      )}
+      <input
+        id="fileInput"
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+      {file && (
+        <>
+          <p className="mt-9"> Uploaded Your Excel File Here ! {file.name}</p>
+          <button
+            onClick={() => {
+              setFile(null);
+              setData([]);
+            }}
+            className="mt-2 px-4 py-2 bg-red-500 text-white rounded"
+          >
+            Remove File
+          </button>
+        </>
+      )}
 
       {data.length > 0 && (
         <div>
@@ -185,17 +229,18 @@ const handleDownloadExcel = () => {
               ))}
             </tbody>
           </table>
-          <button onClick={handleExport} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Initiate call</button>
-          <button onClick={handleDownloadExcel} className="px-4 py-2 bg-green-500 text-white rounded">
+          <button onClick={handleExport} className="mt-4 px-7 py-2 bg-blue-500 text-white rounded">Initiate call</button><br/>
+          <button onClick={handleDownloadExcel} className="px-4 py-2 mt-2 bg-green-500 text-white rounded">
   Download Modified Excel
-</button>
-          <button onClick={handleSendAllData} className="mt-4 ml-4 px-4 py-2 bg-purple-500 text-white rounded">
-            Save to MongoDB
-          </button>
-        </div>
-      )}
-      <LogoutButton />
+</button><br/>
+      <button onClick={handleSendAllData} className="mt-4 ml-4 px-4 py-2 bg-purple-500 text-white rounded">
+        Save to MongoDB
+      </button>
     </div>
+  )}
+
+
+</div>
   );
 };
 

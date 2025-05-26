@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -7,16 +6,38 @@ import 'react-toastify/dist/ReactToastify.css';
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (username.trim() === 'mzcet' && password.trim() === 'sundar') {
-      localStorage.setItem('user', JSON.stringify({ username }));
-      toast.success('Welcome User!');
-      setTimeout(() => navigate('/'), 3000);
-    } else {
-      toast.error('Invalid username or password');
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        if (rememberMe) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify({ username: data.username }));
+        } else {
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('user', JSON.stringify({ username: data.username }));
+        }
+        toast.success('Welcome User!');
+        setTimeout(() => navigate('/'), 3000);
+      } else {
+        toast.error(data.message || 'Login failed');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,24 +61,52 @@ function Login() {
               required
             />
           </div>
-          <br></br>
           <div>
             <label className="block text-sm font-medium text-black-700 mb-1">Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full p-5 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-400"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                className="w-full p-5 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-400"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-600 hover:text-indigo-800 focus:outline-none"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
-          <br></br>
+          <div className="flex items-center justify-between">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                className="form-checkbox h-5 w-5 text-indigo-600"
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
+              />
+              <span className="ml-2 text-gray-700">Remember Me</span>
+            </label>
+            <button
+              type="button"
+              className="text-indigo-600 hover:text-indigo-800 focus:outline-none"
+              onClick={() => alert('Forgot Password functionality not implemented yet.')}
+            >
+              Forgot Password?
+            </button>
+          </div>
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-black py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
+            disabled={loading}
+            className={`w-full bg-indigo-600 text-black py-3 rounded-lg font-semibold transition duration-200 ${
+              loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
+            }`}
           >
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
       </div>

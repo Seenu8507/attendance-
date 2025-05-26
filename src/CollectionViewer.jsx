@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CollectionViewer = () => {
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [collectionData, setCollectionData] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCollections();
@@ -58,12 +60,14 @@ const CollectionViewer = () => {
                 </li>
               ))}
             </ul>
-            <button
-              className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-              onClick={() => setShowDialog(false)}
-            >
-              Close
-            </button>
+            <div className="flex space-x-4 mt-4">
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded"
+                onClick={() => navigate("/")}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -101,16 +105,24 @@ const CollectionViewer = () => {
               </tbody>
             </table>
           </div>
-          <button
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-            onClick={() => {
-              setSelectedCollection(null);
-              setCollectionData([]);
-              setShowDialog(true);
-            }}
-          >
-            Select Another Collection
-          </button>
+          <div className="flex space-x-4 mt-4">
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+              onClick={() => {
+                setSelectedCollection(null);
+                setCollectionData([]);
+                setShowDialog(true);
+              }}
+            >
+              Select Another Collection
+            </button>
+            <button
+              className="px-4 py-2 bg-gray-500 text-white rounded"
+              onClick={() => navigate("/")}
+            >
+              Back
+            </button>
+          </div>
         </div>
       )}
     </div>
