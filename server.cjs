@@ -12,7 +12,7 @@ app.use(cors({ origin: "http://localhost:5173" })); // Allow your frontend to ac
 app.use(express.json());
 
 // MongoDB connection URI and client setup
-const uri = "mongodb://localhost:27017"; // Change if your MongoDB URI is different
+const uri = "mongodb+srv://myuser:mypassword@exceluploaderdb.chfdjie.mongodb.net/?retryWrites=true&w=majority&appName=exceluploaderdb"; // Updated with actual password
 const client = new MongoClient(uri);
 
 const JWT_SECRET = "your_jwt_secret_key"; // Change to a strong secret in production
