@@ -105,6 +105,12 @@ const Header = () => {
             >
               View Collections
             </button>
+            <button
+              onClick={() => navigate("/leave-reports")}
+              className="px-6 py-3 bg-indigo-800 rounded hover:bg-indigo-700 text-white text-lg"
+            >
+              Leave Reports
+            </button>
             <LogoutButton onLogout={() => setLoggedInUser(null)} className="px-6 py-3 text-lg" />
           </>
         )}

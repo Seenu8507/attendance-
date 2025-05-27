@@ -5,6 +5,8 @@ import Login from './component/Login';
 import PrivateRoute from './component/PrivateRoute';
 import CollectionViewer from './CollectionViewer';
 import Header from './component/Header';
+import Responses from './component/Responses';
+import LeaveReports from './component/LeaveReports';
 
 function App() {
   return (
@@ -20,6 +22,16 @@ function App() {
         <Route path="/collections" element={
           <PrivateRoute>
             <CollectionViewer />
+          </PrivateRoute>
+        } />
+        <Route path="/responses" element={
+          <PrivateRoute>
+            <Responses />
+          </PrivateRoute>
+        } />
+        <Route path="/leave-reports" element={
+          <PrivateRoute>
+            <LeaveReports />
           </PrivateRoute>
         } />
       </Routes>
