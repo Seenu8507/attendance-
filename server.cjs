@@ -75,20 +75,26 @@ app.post("/api/twilio-webhook", async (req, res) => {
 
     const db = client.db("leavedata");
 
-    // Store the raw parsed data in "responses" collection
-    const responsesCollection = db.collection("responses");
-    await responsesCollection.insertOne({ data: result, receivedAt: new Date() });
-
-    // Create collection name based on current date and time
+    // Create collection name based on current date and time in 12-hour format
     const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = now.getFullYear();
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const formattedTime = `${hours}_${minutes}${ampm}`;
+    const collectionName = `call_response_${day}_${month}_${year}_${formattedTime}`;
 
-    // Store the leave report in a single collection "leaveReports"
-    const leaveReportsCollection = db.collection("leaveReports");
-    await leaveReportsCollection.insertOne({
+    const collection = db.collection(collectionName);
+    await collection.insertOne({
       leaveType,
       digits,
       receivedAt: now,
-      rawData: result
+      rawData: result,
+      _collectionName: collectionName
     });
 
     // Respond with TwiML to acknowledge
