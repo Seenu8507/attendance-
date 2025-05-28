@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const LeaveReports = () => {
+export default function LeaveReports() {
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [collectionData, setCollectionData] = useState([]);
@@ -21,20 +21,27 @@ const LeaveReports = () => {
       setCollections(data.collections);
       setShowDialog(true);
     } catch (error) {
+      console.error("Error fetching collections:", error);
       setError("Error fetching collections: " + error.message);
     }
   };
+
   const fetchCollectionData = async (collectionName) => {
     try {
-      const response = await fetch(`http://localhost:5000/leavedata/collection-data/${collectionName}`);
+      // Fetch enriched leave reports with student names
+      const response = await fetch(`http://localhost:5000/leavedata/enriched-leave-reports`);
+      console.log("Fetch enriched leave reports response status:", response.status);
       if (!response.ok) {
-        throw new Error("Failed to fetch collection data");
+        const errorText = await response.text();
+        console.error("Error response text:", errorText);
+        throw new Error("Failed to fetch enriched leave reports");
       }
       const data = await response.json();
-      setCollectionData(data.data);
+      setCollectionData(data.leaveReports);
       setSelectedCollection(collectionName);
       setShowDialog(false);
     } catch (error) {
+      console.error("Error fetching collection data:", error);
       setError("Error fetching collection data: " + error.message);
     }
   };
@@ -64,12 +71,16 @@ const LeaveReports = () => {
               </ul>
             )}
             <div className="flex space-x-4 mt-4">
-              <button
-                className="px-4 py-2 bg-red-500 text-white rounded"
-                onClick={() => setShowDialog(false)}
-              >
-                Close
-              </button>
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded"
+              onClick={() => {
+                setShowDialog(false);
+                // Redirect to home page
+                window.location.href = "/";
+              }}
+            >
+              Close
+            </button>
             </div>
           </div>
         </div>
@@ -124,6 +135,4 @@ const LeaveReports = () => {
       )}
     </div>
   );
-};
-
-export default LeaveReports;
+}

@@ -40,7 +40,13 @@ app.post("/api/twilio-webhook", async (req, res) => {
     }
 
     let digits = null;
+    let studentName = null;
     let result = null;
+
+    // Extract studentName from query parameters if present
+    if (req.query.studentName) {
+      studentName = req.query.studentName;
+    }
 
     if (req.is('application/xml') || req.is('text/xml')) {
       // Parse XML body
@@ -48,9 +54,17 @@ app.post("/api/twilio-webhook", async (req, res) => {
       const parser = new xml2js.Parser({ explicitArray: false });
       result = await parser.parseStringPromise(xml);
       digits = result?.Gather?.Digits || null;
+      // If studentName not in query, try to get from XML body
+      if (!studentName) {
+        studentName = result?.studentName || null;
+      }
     } else if (req.is('application/x-www-form-urlencoded')) {
       // Parse URL-encoded form data (Twilio default)
       digits = req.body.Digits || null;
+      // If studentName not in query, try to get from POST body
+      if (!studentName) {
+        studentName = req.body.studentName || null;
+      }
       result = req.body; // raw form data as object
     }
 
@@ -92,6 +106,7 @@ app.post("/api/twilio-webhook", async (req, res) => {
     await collection.insertOne({
       leaveType,
       digits,
+      studentName,
       receivedAt: now,
       rawData: result,
       _collectionName: collectionName
@@ -112,20 +127,20 @@ app.post("/api/twilio-webhook", async (req, res) => {
   }
 });
 
-// New endpoint to fetch leave reports with student info aggregated from all timestamped collections
-app.get("/api/leave-reports", async (req, res) => {
+// New endpoint to fetch leave reports with student info aggregated from all timestamped collections in leavedata db
+app.get("/leavedata/enriched-leave-reports", async (req, res) => {
   try {
-    const db = client.db("leaveRecord");
+    const db = client.db("leavedata");
 
-    // Get all collection names that start with "leaveReports_"
+    // Get all collection names that start with "call_response_"
     const collections = await db.listCollections().toArray();
-    const leaveReportCollections = collections
+    const callResponseCollections = collections
       .map(c => c.name)
-      .filter(name => name.startsWith("leaveReports_"));
+      .filter(name => name.startsWith("call_response_"));
 
     // Aggregate leave reports from all these collections
     let allLeaveReports = [];
-    for (const colName of leaveReportCollections) {
+    for (const colName of callResponseCollections) {
       const collection = db.collection(colName);
       const reports = await collection.find({}).toArray();
       allLeaveReports = allLeaveReports.concat(reports);
@@ -138,28 +153,29 @@ app.get("/api/leave-reports", async (req, res) => {
     // Get all collection names to find student data collections
     const studentCollections = collections
       .map(c => c.name)
-      .filter(name => !["responses", "login"].includes(name) && !name.startsWith("leaveReports_"));
+      .filter(name => !name.startsWith("call_response_") && !name.startsWith("responses") && !name.startsWith("login"));
 
-    // For each leave report, try to find matching student by phone number in student collections
+    // For each leave report, try to find matching student by parent mobile number in student collections
     const enrichedReports = await Promise.all(allLeaveReports.map(async (report) => {
       let studentInfo = null;
       let parentNumber = null;
 
-      // Extract phone number from rawData if available
-      const phoneNumber = report.rawData?.From || report.rawData?.Caller || null;
+      // Extract parent mobile number from rawData if available
+      const parentMobile = report.rawData?.Parent_mob || report.rawData?.ParentPhoneNumber || report.rawData?.ParentNumber || null;
 
-      if (phoneNumber) {
+      if (parentMobile) {
         for (const colName of studentCollections) {
           const collection = db.collection(colName);
           studentInfo = await collection.findOne({
             $or: [
-              { PhoneNumber: phoneNumber },
-              { ParentPhoneNumber: phoneNumber },
-              { ParentNumber: phoneNumber }
+              { Parent_mob: parentMobile },
+              { ParentPhoneNumber: parentMobile },
+              { ParentNumber: parentMobile },
+              { PhoneNumber: parentMobile }  // Added this to match possible field name
             ]
           });
           if (studentInfo) {
-            parentNumber = studentInfo.Parent_mob || studentInfo.ParentPhoneNumber || studentInfo.ParentNumber || null;
+            parentNumber = parentMobile;
             break;
           }
         }
@@ -169,18 +185,18 @@ app.get("/api/leave-reports", async (req, res) => {
         leaveType: report.leaveType,
         digits: report.digits,
         receivedAt: report.receivedAt,
-        studentName: studentInfo ? studentInfo.StudentName || studentInfo.Name || null : null,
+        studentName: studentInfo ? (studentInfo.StudentName || studentInfo.Name || null) : null,
         parentNumber: parentNumber,
-        year: studentInfo ? studentInfo.year || null : null,
-        dept: studentInfo ? studentInfo.dept || null : null,
+        year: studentInfo ? (studentInfo.year || null) : null,
+        dept: studentInfo ? (studentInfo.dept || null) : null,
         rawData: report.rawData
       };
     }));
 
     res.status(200).json({ leaveReports: enrichedReports });
   } catch (error) {
-    console.error("Error fetching leave reports:", error);
-    res.status(500).json({ message: "Failed to fetch leave reports" });
+    console.error("Error fetching enriched leave reports:", error);
+    res.status(500).json({ message: "Failed to fetch enriched leave reports" });
   }
 });
 
@@ -272,7 +288,7 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/run-uipath", (req, res) => {
   const uiRobotPath = `"C:\\Program Files\\UiPath\\Studio\\UiRobot.exe"`; // ✅ Make sure this path is correct
-  const packagePath = `"C:\\finalyearproject\\Attendancevoicemail\\Attendancevoicemial.1.0.6.nupkg"`; // Updated to your published package path
+  const packagePath = `"C:\\finalyearproject\\Attendancevoicemial\\AttendancevoicemialRecent.1.0.14.nupkg"`; // Updated to your published package path
 
   exec(`${uiRobotPath} -file ${packagePath}`, (error, stdout, stderr) => {
     if (error) {
