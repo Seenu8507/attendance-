@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function LeaveReports() {
+const CollectionViewer = () => {
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [collectionData, setCollectionData] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCollections();
@@ -21,66 +22,74 @@ export default function LeaveReports() {
       setCollections(data.collections);
       setShowDialog(true);
     } catch (error) {
-      console.error("Error fetching collections:", error);
-      setError("Error fetching collections: " + error.message);
+      alert("Error fetching collections: " + error.message);
     }
   };
 
-  const fetchCollectionData = async (collectionName) => {
+const fetchCollectionData = async (collectionName) => {
     try {
-      // Fetch enriched leave reports with student names
-      const response = await fetch(`http://localhost:5000/leavedata/enriched-leave-reports`);
-      console.log("Fetch enriched leave reports response status:", response.status);
+      const response = await fetch(`http://localhost:5000/leavedata/collection-data/${collectionName}`);
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response text:", errorText);
-        throw new Error("Failed to fetch enriched leave reports");
+        throw new Error("Failed to fetch collection data");
       }
       const data = await response.json();
-      setCollectionData(data.leaveReports);
+
+      // Filter and map data to show only specified fields
+      const filteredData = data.data.map((doc) => {
+        return {
+          studentname: doc.studentName || doc.StudentName || null,
+          leavetype: doc.leaveType || doc.leavetype || null,
+          receivedAt: doc.receivedAt ? format12hTime(new Date(doc.receivedAt)) : null,
+          rawdata: doc.rawData || doc.rawdata || null,
+          collection: collectionName,
+          name: doc.name || null,
+        };
+      });
+
+      setCollectionData(filteredData);
       setSelectedCollection(collectionName);
       setShowDialog(false);
     } catch (error) {
-      console.error("Error fetching collection data:", error);
-      setError("Error fetching collection data: " + error.message);
+      alert("Error fetching collection data: " + error.message);
     }
   };
 
-  if (error) return <div className="text-red-600 p-4">{error}</div>;
+  // Helper function to format date to 12h time string hh:mm AM/PM
+  const format12hTime = (date) => {
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    return `${hours}:${minutes} ${ampm}`;
+  };
+
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Leave Reports Viewer</h1>
+      <h1 className="text-2xl font-bold mb-4">LeaveData Collections Viewer</h1>
 
       {showDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Select a Collection</h2>
-            {collections.length === 0 ? (
-              <p>No collections found.</p>
-            ) : (
-              <ul className="max-h-60 overflow-y-auto">
-                {collections.map((col) => (
-                  <li
-                    key={col}
-                    className="cursor-pointer p-2 hover:bg-gray-200 rounded"
-                    onClick={() => fetchCollectionData(col)}
-                  >
-                    {col}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="max-h-60 overflow-y-auto">
+              {collections.map((col) => (
+                <li
+                  key={col}
+                  className="cursor-pointer p-2 hover:bg-gray-200 rounded"
+                  onClick={() => fetchCollectionData(col)}
+                >
+                  {col}
+                </li>
+              ))}
+            </ul>
             <div className="flex space-x-4 mt-4">
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded"
-              onClick={() => {
-                setShowDialog(false);
-                // Redirect to home page
-                window.location.href = "/";
-              }}
-            >
-              Close
-            </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded"
+                onClick={() => navigate("/")}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -93,27 +102,25 @@ export default function LeaveReports() {
             <table className="min-w-full border border-gray-300">
               <thead>
                 <tr>
-                  {collectionData.length > 0 &&
-                    Object.keys(collectionData[0]).map((key) => (
-                      <th
-                        key={key}
-                        className="border border-gray-300 px-4 py-2 bg-gray-100 text-left"
-                      >
-                        {key}
-                      </th>
-                    ))}
+                  <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">Student Name</th>
+                  <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">Leave Type</th>
+                  <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">Received At</th>
+                  <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">Raw Data</th>
+                  <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">Collection</th>
+                  <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">Name</th>
                 </tr>
               </thead>
               <tbody>
                 {collectionData.map((doc, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    {Object.keys(doc).map((key) => (
-                      <td key={key} className="border border-gray-300 px-4 py-2">
-                        {typeof doc[key] === "object"
-                          ? JSON.stringify(doc[key])
-                          : String(doc[key])}
-                      </td>
-                    ))}
+                    <td className="border border-gray-300 px-4 py-2">{doc.studentname || "-"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{doc.leavetype || "-"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{doc.receivedAt || "-"}</td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {doc.rawdata ? JSON.stringify(doc.rawdata) : "-"}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">{doc.collection || "-"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{doc.name || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -130,9 +137,17 @@ export default function LeaveReports() {
             >
               Select Another Collection
             </button>
+            <button
+              className="px-4 py-2 bg-gray-500 text-white rounded"
+              onClick={() => navigate("/")}
+            >
+              Back
+            </button>
           </div>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default CollectionViewer;

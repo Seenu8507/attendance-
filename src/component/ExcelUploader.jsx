@@ -26,7 +26,12 @@ const ExcelUploader = () => {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const parsedData = XLSX.utils.sheet_to_json(sheet);
-      setData(parsedData.map(row => ({ ...row, Absent: "No" })));
+      const dataWithResponse = parsedData.map(row => ({ ...row, Absent: "No", response: "-" }));
+      console.log("Parsed data with response field:", dataWithResponse);
+      if (dataWithResponse.length > 0) {
+        console.log("Keys of first row:", Object.keys(dataWithResponse[0]));
+      }
+      setData(dataWithResponse);
     };
     reader.readAsBinaryString(uploadedFile);
   };
@@ -36,6 +41,10 @@ const ExcelUploader = () => {
     updatedData[rowIndex][colKey] = value;
     setData(updatedData);
   };
+  
+  // Add a specific handler for response column if needed (optional)
+  // But handleCellChange can handle it as well since it is generic
+
   const handleSendAllData = async () => {
     if (!file) {
       alert("No file uploaded to save data from!");
@@ -83,7 +92,11 @@ const ExcelUploader = () => {
     updatedData[rowIndex]["Absent"] = updatedData[rowIndex]["Absent"] === "Yes" ? "No" : "Yes";
     setData(updatedData);
   };
-  const handleExport = async () => {
+const handleExport = async () => {
+  const confirmCall = window.confirm("Are you sure you want to initiate the call for absentees parents?");
+  if (!confirmCall) {
+    return;
+  }
   try {
     const response = await fetch("http://localhost:5000/api/run-uipath", {
       method: "POST",
@@ -115,15 +128,22 @@ const handleDownloadExcel = () => {
   // Get original filename without extension
   const originalName = file.name.replace(/\.[^/.]+$/, "");
 
-  // Format date and time
+  // Format date and time in dd:mm:yyyy and 12h format with AM/PM
   const now = new Date();
-  const formatted = now
-    .toISOString()
-    .replace(/T/, "_")
-    .replace(/:/g, "-")
-    .split(".")[0]; // e.g., 2025-05-10_14-31-00
+  const pad = (n) => (n < 10 ? "0" + n : n);
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  let hours = now.getHours();
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  const timeStr = `${pad(hours)}-${minutes}-${seconds}${ampm}`;
+  const dateStr = `${day}-${month}-${year}`;
 
-  const newFilename = `${originalName}_${formatted}.xlsx`;
+  const newFilename = `${originalName}_${dateStr}_${timeStr}.xlsx`;
 
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -189,13 +209,15 @@ const handleCreateLeaveReport = () => {
                 {Object.keys(data[0]).map((key) => (
                   <th key={key} className="border border-gray-300 p-2">{key}</th>
                 ))}
-                
+                {!Object.keys(data[0]).includes("response") && (
+                  <th className="border border-gray-300 p-2">response</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {data.map((row, rowIndex) => (
                 <tr key={rowIndex}>
-                  {Object.keys(row).map((colKey, colIndex) => (
+                {Object.keys(row).map((colKey, colIndex) => (
                     <td key={colIndex} className="border border-gray-300 p-2">
                       {colKey === "Absent" ? (
                         <select
@@ -206,13 +228,13 @@ const handleCreateLeaveReport = () => {
                           <option value="Yes">Yes</option>
                           <option value="No">No</option>
                         </select>
-                      ) : colKey === "Absent" ? (
-                        <button
-                          onClick={() => toggleExtraAbsent(rowIndex)}
-                          className={`px-4 py-2 rounded ${row[colKey] === "Yes" ? "bg-green-500" : "bg-red-500"} text-white`}
-                        >
-                          {row[colKey] === "Yes" ? "Yes" : "No"}
-                        </button>
+                      ) : colKey === "response" ? (
+                        <input
+                          type="text"
+                          value={row[colKey] || "-"}
+                          onChange={(e) => handleCellChange(rowIndex, colKey, e.target.value)}
+                          className="w-full border-none focus:outline-none"
+                        />
                       ) : (
                         <input
                           type="text"

@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+function format12hTime(date) {
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+  return hours + ":" + minutesStr + " " + ampm;
+}
+
 const CollectionViewer = () => {
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(null);
@@ -95,9 +105,11 @@ const CollectionViewer = () => {
                   <tr key={index} className="hover:bg-gray-50">
                     {Object.keys(doc).map((key) => (
                       <td key={key} className="border border-gray-300 px-4 py-2">
-                        {typeof doc[key] === "object"
-                          ? JSON.stringify(doc[key])
-                          : String(doc[key])}
+                  {key === "savedAt" && doc[key]
+                    ? format12hTime(new Date(doc[key]))
+                    : typeof doc[key] === "object"
+                    ? JSON.stringify(doc[key])
+                    : String(doc[key])}
                       </td>
                     ))}
                   </tr>
