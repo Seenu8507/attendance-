@@ -1,0 +1,70 @@
+{
+  "name": "Attendancevoicemial",
+  "projectId": "bac606bd-ea61-495c-a83e-355f2d6e0a0b",
+  "description": "Blank Process",
+  "main": "Main.xaml",
+  "dependencies": {
+    "UiPath.Excel.Activities": "[2.24.4]",
+    "UiPath.HttpWebhook.IntegrationService.Activities": "5.0.0-preview",
+    "UiPath.IntegrationService.Activities": "1.14.0",
+    "UiPath.System.Activities": "[25.2.1]",
+    "UiPath.Twilio.IntegrationService.Activities": "[5.0.11]",
+    "UiPath.WebAPI.Activities": "[1.21.1]",
+    "UiPath.WorkflowEvents.Activities": "[3.7.0]"
+  },
+  "webServices": [],
+  "entitiesStores": [],
+  "schemaVersion": "4.0",
+  "studioVersion": "25.0.161.0",
+  "projectVersion": "1.0.14",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": true,
+    "isAttended": false,
+    "requiresUserInteraction": true,
+    "supportsPersistence": false,
+    "workflowSerialization": "DataContract",
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": true,
+    "pipType": "ChildSession"
+  },
+  "designOptions": {
+    "projectProfile": "Developement",
+    "outputType": "Process",
+    "libraryOptions": {
+      "includeOriginalXaml": false,
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
+  },
+  "expressionLanguage": "VisualBasic",
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "03cef6d4-51a0-4bb1-82f8-65b64caae9fe",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "final.xaml",
+      "uniqueId": "c0be13bc-4736-4588-af28-e61b3fe419cb",
+      "input": [],
+      "output": []
+    }
+  ],
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {},
+  "targetFramework": "Windows"
+}
