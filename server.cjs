@@ -288,7 +288,7 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/run-uipath", (req, res) => {
   const uiRobotPath = `"C:\\Program Files\\UiPath\\Studio\\UiRobot.exe"`; // ✅ Make sure this path is correct
-  const packagePath = `"C:\\finalyearproject\\Attendancevoicemial\\AttendancevoicemialRecent.1.0.14.nupkg"`; // Updated to your published package path
+  const packagePath = `"C:\studies\Final Year Proj\exceluploader\Attendancevoicemial\AttendancevoicemialRecent.1.0.14.nupkg"`; // Updated to your published package path
 
   exec(`${uiRobotPath} -file ${packagePath}`, (error, stdout, stderr) => {
     if (error) {
